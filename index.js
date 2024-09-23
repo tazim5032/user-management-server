@@ -68,6 +68,11 @@ async function run() {
 
     app.post("/users", async (req, res) => {
       const info = req.body;
+      const email=info.email;
+      const existingUser = await userCollection.findOne({ email });
+      if (existingUser) {
+        return res.send({ message: "exist" }); // Return 'exist' message if user is found
+      }
       const hash = await bcrypt.hash(info.password, 10);
       info.password = hash;
       const user = await userCollection.insertOne(info);
@@ -96,7 +101,7 @@ async function run() {
 
         res.send({ message: "Users blocked successfully", result });
       } catch (error) {
-      //  console.error(error);
+        //  console.error(error);
         res.status(500).send({ message: "Server error" });
       }
     });
@@ -116,7 +121,7 @@ async function run() {
 
         res.send({ message: "Users unblocked successfully", result });
       } catch (error) {
-      //  console.error(error);
+        //  console.error(error);
         res.status(500).send({ message: "Server error" });
       }
     });
@@ -167,7 +172,10 @@ async function run() {
     app.get("/user-status/:email", async (req, res) => {
       const email = req.params.email;
       const user = await userCollection.findOne({ email });
-      if (user) {
+      if (!user) {
+        return res.send({ message: "notExist" });
+      }
+      if (user.status == "blocked") {
         res.send({ message: "blocked" });
       } else {
         res.send({ message: "not blocked" });
